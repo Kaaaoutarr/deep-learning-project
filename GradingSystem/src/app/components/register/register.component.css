@@ -1,11 +1,9 @@
 
-@import url(https://fonts.googleapis.com/css?family=Lily+Script+One);
-
 body {
 	background-image: url("https://www.bhinterieur.ch/file/2018/02/cabinet-medical-bh-interieur.jpg"); 
 
 	margin:0;
-	font-family:arial,tahoma,sans-serif;
+	font-family:'amiri',sans-serif;
 	font-size:12px;
 	font-weight:normal;
 	direction:ltr;
@@ -18,7 +16,7 @@ form {
 	width:600px;
 	height:auto;
 	overflow:hidden;
-	background:rgb(202, 229, 234);
+	background:rgb(205 202 234);
 	border-radius:10px;
     opacity: 0.8;
 }
@@ -31,7 +29,7 @@ form label {
 
 form label,
 form input {
-	float:left;
+	float:right;
 	clear:both;
 }
 
@@ -107,11 +105,11 @@ input[type="submit"]:active {
 #logo {
 	margin:0 auto;
 	width:200px;
-	font-family:'Lily Script One', cursive;
+	font-family:'amiri', serif;
 	font-size:30px;
 	font-weight:bold;
 	text-align:center;
-	color:rgb(12, 72, 193);
+	color:rgb(118, 49, 164);
 	-webkit-transition:0.2s ease all;
 	   -moz-transition:0.2s ease all;
 	    -ms-transition:0.2s ease all;
@@ -142,4 +140,8 @@ input[type="submit"]:active {
     align-items: center;
     justify-content: center;
    
+}
+button{
+	background-color: rgb(142, 67, 193);
+	
 }

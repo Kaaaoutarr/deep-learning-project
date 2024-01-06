@@ -9,7 +9,7 @@ font-family: 'Amiri',serif;
     width: 100%;
     height: 90vh;
 
-    background-image: linear-gradient(rgba(91, 56, 244, 0.3),rgba(3, 51, 37, 0.3));
+    bacground-image: linear-gradient(rgba(91, 56, 244, 0.3),rgba(3, 51, 37, 0.3));
     position: relative;
     padding: 0 5%;
     display: flex;
@@ -38,10 +38,10 @@ font-family: 'Amiri',serif;
     }
 }
 span{
-    font-family: Cursive;
+    font-family: 'Amiri',serif;
     font-weight: 300;
     font-size:30px;
-    color: #22dfc3;
+    color: #b5a5db;
 }
 
 
@@ -55,35 +55,47 @@ span{
 a{
     text-decoration: none;
 }
-.button{
-color: #389090;
-background-color: #daf7f7;
-border: 2px solid rgb(187, 152, 224);
-padding: 10px;
-border-radius: 50px 20px;
-font-size: 25px;
+.button {
+    color: #ffffff; /* Light text color */
+    background-color: rgb(116, 87, 148); /* Purple background color */
+    border: 2px solid rgb(187, 152, 224);
+    padding: 5px;
+    border-radius: 10px; /* Use a rectangle border-radius */
+    font-size: 25px;
 }
-.button:hover{
+
+.button:hover {
     -webkit-text-stroke: 1px rgb(62, 11, 74);
-    background-color: rgb(209, 212, 213);
+    background-color: rgb(209, 210, 213);
     border: 2px solid rgb(105, 181, 196);
-    color:#389090
-    var(--box-shadow)
+    color: #ffffff; /* Light text color on hover */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Add a box shadow on hover */
 }
-.text1{
+
+.text1 {
     border: 2px solid rgb(187, 152, 224);
-    padding: 15px 0px ;
-    border-radius: 50px 20px;
-   
-   
-  
+    padding: 20px 10px; /* Adjust padding for a more balanced look */
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+    transition: border-color 0.3s ease; /* Smooth transition for border color on hover */
 }
-.text2{
+
+.text1:hover {
+    border-color: rgb(105, 181, 196); /* Change border color on hover */
+}
+
+.text2 {
     border: 2px solid rgb(187, 152, 224);
-    padding: 15px 0px ;
-    border-radius: 20px 50px;
-   
+    padding: 20px 10px; /* Adjust padding for a more balanced look */
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+    transition: border-color 0.3s ease; /* Smooth transition for border color on hover */
 }
+
+.text2:hover {
+    border-color: rgb(105, 181, 196); /* Change border color on hover */
+}
+
 .text{
     color:#daf7f7;
     font-size: large;
@@ -93,7 +105,7 @@ font-size: 25px;
     text-align: center;
 }
 .txt1, .txt2{
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: 'Amiri',serif;
     color: rgb(246, 220, 172);
 }
 .automoto{
