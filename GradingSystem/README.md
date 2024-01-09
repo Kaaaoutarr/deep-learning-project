@@ -1,27 +1,43 @@
-# GradingSystem
+# Arabic Automated Short Answers Grading System and Smart Assistance for Islamic Education 
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.0.0.
+This project is aimed at developing an advanced system for grading short answers in Arabic, accompanied by a smart assistance feature to aid Islamic education for schoolers. The primary objective is to assign accurate grades (ranging from 0 to 20) to students based on their answers. The system will operate in the Arabic language and involve the creation of a dataset through the application of web scraping techniques, gathering data from diverse sources such as Arabic websites, datasets, and books.
 
-## Development server
+## Project Overview
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+### 1. Data Collection
+- Utilize web scraping techniques to gather data from various Arabic resources, including websites, datasets, and books.
 
-## Code scaffolding
+### 2. Natural Language Processing Pipeline
+- Establish a comprehensive Arabic Natural Language Processing (NLP) pipeline for text analysis.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### 3. Exploratory Data Analysis (EDA)
+- Apply Exploratory Data Analysis techniques to gain insights into the collected data and understand its characteristics.
 
-## Build
+### 4. Word Embedding and Encoding
+- Implement word embedding and encoding methods to represent textual data in a format suitable for model training.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### 5. Model Training
+- Train models using Recurrent Neural Network (RNN), Long Short-Term Memory (LSTM)for accurate grading of short answers.
 
-## Running unit tests
+### 6. Student Assistance
+- Develop a smart assistance system that generates guidelines during the evaluation process based on the student's progression.
+- Use BERT for fine-tuning, Prompt/Fine-tuning of Language Model Models (LLMs) like GPT-3, Falcon, and Alpaca for text generation.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### 7. Model Evaluation
+- Evaluate models using various metrics such as ROC, accuracy, F1 score, blue score, etc.
+- Select the best-performing model based on experimental results.
 
-## Running end-to-end tests
+### 8. Model Deployment
+- Create a SAP web application (Angular) for model consumption.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## Specific Tools and Technologies
 
-## Further help
+- NLP Libraries: NLTK, Word2Vec, GloVe, etc.
+- Machine Learning Framework: PyTorch
+- Web Frameworks: Flask/FastAPI, GraphQL
+- Data Scraping: Scrapy
+- Workflow Automation: Apache Airflow
+- Log Analysis: Kibana
+- Collaboration and Version Control: GitHub
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+
