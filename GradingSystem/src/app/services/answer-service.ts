@@ -10,13 +10,15 @@ import { API_URL } from 'src/env';
 export class AnswerService {
   private submitAnswersUrl =  `${API_URL}/answers`;
   private fetchAnswersUrl =  `${API_URL}/answers`; 
- 
+
   constructor(private http: HttpClient) { }
 
-  submitAnswers(answer: Answer): Observable<any> {
-    return this.http.post<any>(this.submitAnswersUrl, answer);
+  submitAnswers(answer: Answer, callback: (response: any) => void): void {
+    this.http.post<any>(this.submitAnswersUrl, answer).subscribe(response => {
+      callback(response);
+    });
   }
- 
+
   fetchAnswers(): Observable<Answer[]> {
     return this.http.get<Answer[]>(this.fetchAnswersUrl);
   }
