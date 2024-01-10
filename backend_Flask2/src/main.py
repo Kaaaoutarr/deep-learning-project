@@ -1,63 +1,52 @@
-# coding=utf-8
+# Import necessary libraries and modules
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from .entities.entity import Session, engine, Base
-from .entities.question import Question, QuestionSchema
-from .entities.answer import Answer, AnswerSchema
-from .entities.grade import Grade
-from .entities.grade import GradeSchema
-
-from sklearn.model_selection import train_test_split
-import pickle
-import nltk
+import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd 
-import seaborn as sns
+from sklearn.model_selection import train_test_split
+from gensim.models import Word2Vec
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+from sklearn.preprocessing import MinMaxScaler
+
+#--------------------------------------------ML Code -------------------------------------------
+# Load your datasets and preprocess as needed
+df1 = pd.read_csv("C:/Users/damia/Downloads/GradingSystemML-master/DataSet1.csv")
+df2 = pd.read_csv("C:/Users/damia/Downloads/GradingSystemML-master/DataSet2.csv")
+df = pd.merge(df1, df2, on='Question_id')
+
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem import PorterStemmer
 from gensim.models import Word2Vec
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd 
-import seaborn as sns
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics.pairwise import cosine_distances
-import warnings 
-warnings.filterwarnings('ignore')
+import pandas as pd
 
-
-
-#--------------------------------------------ML Code -------------------------------------------
-# apload data
-df2 = pd.read_csv("C:/Users/safae/Documents/lsIS4/ML2/Dataset_Small_range.csv")
-df1 = pd.read_csv("C:/Users/safae/Documents/lsIS4/ML2/new_DATASET1 (1).csv")
-
-# Fusionner les deux ensembles de données en utilisant la colonne commune : Question_id
+# Load your datasets
+df1 = pd.read_csv("C:/Users/damia/Downloads/GradingSystemML-master/DataSet1.csv")
+df2 = pd.read_csv("C:/Users/damia/Downloads/GradingSystemML-master/DataSet2.csv")
 df = pd.merge(df1, df2, on='Question_id')
-df.head()
-#Tokenisation
-df['Answers'] = df['Answers'].apply(nltk.word_tokenize)
 
-#Drop stop words
+# Tokenization
+df['Answers'] = df['Answers'].apply(word_tokenize)
+
+# Drop stop words
 stop_words = set(stopwords.words('Arabic'))
 df['Answers'] = df['Answers'].apply(lambda x: [w for w in x if not w in stop_words])
 
-#Lemmatization & stemming
+# Lemmatization & stemming
 stemmer = PorterStemmer()
-# Stem words in answers column
 df['Answers'] = df['Answers'].apply(lambda x: [stemmer.stem(word) for word in x])
 
 lemmatizer = WordNetLemmatizer()
-# Lemmatize words in answers column
 df['Answers'] = df['Answers'].apply(lambda x: [lemmatizer.lemmatize(word) for word in x])
 
-#df.head()
-#Word2Vec
+# Word2Vec
 model = Word2Vec(df['Answers'], min_count=1)
-#Vectorise toutes les réponses:::
+
+# Vectorize responses
 max_len = model.vector_size
 
 W = np.zeros((len(df['Answers']), max_len))
@@ -71,26 +60,25 @@ for i, sentence in enumerate(df['Answers']):
         W[i, :] = mean_vector
 
 
+# Define the Complex LSTM model
+class ComplexLSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_layers=2):
+        super(ComplexLSTM, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+        self.num_layers = num_layers
 
-#Vectorise la réponse d'etudiant
-def verctoriseResponse(response):
-    # Tokeniser la réponse entrée
-    response_tokens = nltk.word_tokenize(response)
-    
-    # Supprimer les mots d'arrêt de la réponse
-    response_tokens = [w for w in response_tokens if not w in stop_words]
-    
-    # Appliquer le stemming à la réponse
-    response_tokens = [stemmer.stem(word) for word in response_tokens]
-    
-    # Appliquer la lemmatisation à la réponse
-    response_tokens = [lemmatizer.lemmatize(word) for word in response_tokens]
-    
-    # Vectoriser la réponse en utilisant le modèle Word2Vec
-    response_vector = np.mean([model.wv[word] for word in response_tokens if word in model.wv], axis=0)
-    
-    return response_vector
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), hidden_size).to(x.device)
+        out, _ = self.lstm(x, (h0, c0))
+        out = self.fc(out[:, -1, :])
+        return out
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
+# Assuming you already have 'existing_answers_vectors' and 'df' available
 def find_existing_answers_vectors(df, question_id, W):
 
     if question_id in df['Question_id'].values:
@@ -106,177 +94,142 @@ def find_existing_answers_vectors(df, question_id, W):
         existing_answers_vectors = None
     existing_answers_vectors = np.array(existing_answers_vectors)
     return existing_answers_vectors
+    pass
 
-# -------------------- Model : predicting the score : -------------------------------
-def prediction(response_vector, existing_answers_vectors , question_id):
-    from sklearn.ensemble import GradientBoostingRegressor
-    
-    #existing_answers_vectors = find_existing_answers_vectors(df, question_id, W)
-    
-    # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(existing_answers_vectors, df[(df['Question_id'] == question_id)]['Score'], test_size=0.2, random_state=42)
-    
-    # Create and train the Gradient Boosted Regression model
-    gb_model = GradientBoostingRegressor(n_estimators=100, random_state=42)
-    gb_model.fit(X_train, y_train)
-    
-    # Reshape response vector to have shape (1, n)
-    response_vector_reshaped = response_vector.reshape(1, -1)
-    
-    # Predict the score using the Gradient Boosted Regression model
-    score_prediction = gb_model.predict(response_vector_reshaped)
-    #print("Predicted score:", score_prediction[0])
-    return score_prediction[0]
+existing_answers_vectors = find_existing_answers_vectors(df, question_id, W)
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(existing_answers_vectors, df[df['Question_id'] == question_id]['Score'], test_size=0.2, random_state=42)
+
+# Scale input data to [0, 1] range
+scaler = MinMaxScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Convert data to PyTorch tensors
+X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32)
+X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32)
+y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32)
+y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32)
 
 
+# Create the Complex LSTM model
+complex_lstm_model = ComplexLSTM(input_size, hidden_size, output_size, num_layers)
 
-#------------------------------------- creating the Flask application----------------------------------------------
+# Define loss function and optimizer
+criterion = nn.MSELoss()
+optimizer = optim.Adam(complex_lstm_model.parameters(), lr=0.001)
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# Define the Complex LSTM model
+class ComplexLSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_layers=2):
+        super(ComplexLSTM, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+        self.num_layers = num_layers
+        
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), hidden_size).to(x.device)  # Initialize hidden state
+        c0 = torch.zeros(self.num_layers, x.size(0), hidden_size).to(x.device)  # Initialize cell state
+        out, _ = self.lstm(x, (h0, c0))
+        out = self.fc(out[:, -1, :])  # Using the last time step's output
+        return out
+
+# Assuming X_train_tensor, X_test_tensor, y_train_tensor, y_test_tensor are already defined
+
+# Define loss function and optimizer
+criterion = nn.MSELoss()
+optimizer = optim.Adam(complex_lstm_model.parameters(), lr=0.001)
+
+# Training the Complex LSTM model
+num_epochs = 200
+batch_size = 5
+
+for epoch in range(num_epochs):
+    permutation = torch.randperm(X_train_tensor.size(0))
+    for i in range(0, X_train_tensor.size(0), batch_size):
+        indices = permutation[i:i + batch_size]
+        batch_x, batch_y = X_train_tensor[indices], y_train_tensor[indices]
+        
+        optimizer.zero_grad()
+        outputs = complex_lstm_model(batch_x.unsqueeze(1))
+        loss = criterion(outputs.squeeze(), batch_y)
+        loss.backward()
+        optimizer.step()
+    
+    if (epoch+1) % 10 == 0:
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+
+# Initialize Flask app
 app = Flask(__name__)
-# ... other import statements .
 CORS(app)
 
+# Prediction route
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Get the response text from the request
+    response_text = request.json['response']
 
-# if needed, generate database schema
-Base.metadata.create_all(engine)
+   # Import the necessary libraries
+from flask import request, jsonify
 
-#--------------------------------------------------questions-------------------------------------------------------------
-#Les routes qui gérent les requetes et les reponses :
-@app.route('/questions')
-def fetchQuestions(): # recupérer les question depuis la db
-    # fetching from the database
-    session = Session()
-    question_objects = session.query(Question).all()
+# Assuming that your ComplexLSTM model is defined and loaded as complex_lstm_model
 
-    # transforming into JSON-serializable objects
-    schema = QuestionSchema(many=True)
-    questions = schema.dump(question_objects)
+# Tokenize, preprocess, and vectorize the response
+def preprocess_response(response):
+    # Tokenize the response text
+    response_tokens = nltk.word_tokenize(response)
 
-    # serializing as JSON
-    session.close()
-    return jsonify(questions)
+    # Remove stop words from the response
+    response_tokens = [w for w in response_tokens if not w in stop_words]
 
-@app.route('/questions', methods=['POST'])
-def submitQuestions():
-    # mount Question object
-    posted_question = QuestionSchema(only=('text_question'))\
-        .load(request.get_json())
+    # Apply stemming to the response
+    response_tokens = [stemmer.stem(word) for word in response_tokens]
 
-    question = Question(**posted_question.data, created_by="HTTP post request")
+    # Apply lemmatization to the response
+    response_tokens = [lemmatizer.lemmatize(word) for word in response_tokens]
 
-    # persist question
-    session = Session()
-    session.add(question)
-    session.commit()
+    # Vectorize the response using the Word2Vec model
+    response_vector = np.mean([model.wv[word] for word in response_tokens if word in model.wv], axis=0)
 
-    # return created question
-    new_question = QuestionSchema().dump(question).data
-    session.close()
-    return jsonify(new_question), 201
-#-----------------------------------------------------Answers------------------------------------------------------------
-@app.route('/answers')
-def fetchAnswers():
-    # fetching from the database
-    session = Session()
-    Answer_objects = session.query(Answer).all()
+    return response_vector
 
-    # transforming into JSON-serializable objects
-    schema = AnswerSchema(many=True)
-    answers = schema.dump(Answer_objects)
+# Prediction route
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Get the response text from the request
+    response_text = request.json['response']
 
-    # serializing as JSON
-    session.close()
-    return jsonify(answers)
+    # Preprocess the response text and convert it to a NumPy array
+    response_vector = preprocess_response(response_text)
+    response_vector = torch.from_numpy(response_vector).float().unsqueeze(0)
+
+    # Make the prediction using the Complex LSTM model
+    with torch.no_grad():
+        score_prediction = complex_lstm_model(response_vector.unsqueeze(1))
+
+    predicted_score = score_prediction.item()
+
+    # Return the predicted score as JSON
+    return jsonify({'predicted_score': predicted_score})
 
 
-@app.route('/answers', methods=['POST'])
-def submitAnswers():
-    # mount answer object
-    posted_answer = AnswerSchema(only=('text_answer', 'question_id', 'student_id')).load(request.get_json(), many=False)
-    answer = Answer(**posted_answer)
+    # Convert data to PyTorch tensor
+    response_vector_tensor = torch.tensor(response_vector, dtype=torch.float32).unsqueeze(0)
 
-    session = Session()
-    session.add(answer)
-    session.commit()
-    #Calling  verctoriseResponse , find_existing_answers_vectors , prediction Functions
-    # on vectorise la réponse 
-    response_vector = verctoriseResponse(answer.text_answer)
-    #on récupere toutes les réponses d'entrainement  qui ont le meme question_id 
-    existing_answers_vectors = find_existing_answers_vectors(df,answer.question_id,W)
-    # ici  le modele prend comme arguments le retour des deux fonction precedentes ,
-    predicted_score = prediction(response_vector,existing_answers_vectors,answer.question_id)
-    print("predicted score :", predicted_score)
-    #Apres la prédiction du score , on l'stocker dans db on utilisant la fonction submitGrades
-    submitGrades(score=predicted_score, answer_id=answer.id, student_id=answer.student_id)
-    print("grades submitted")
-    # return created answer
-    answer_schema = AnswerSchema()
-    response = answer_schema.dump(answer)
-   
-    session.close()
-    return jsonify(response), 201
+    # Make prediction using the Complex LSTM model
+    with torch.no_grad():
+        score_prediction = complex_lstm_model(response_vector_tensor.unsqueeze(1))
 
-   
-#--------------------------------------------------------grades----------------------------------------------------------------
-# On a appelé cette fonction dans la fonction submitAnswer
-def submitGrades(score, answer_id, student_id):
-    # create a dictionary with the attribute values
-    posted_grade = {
-        'score': score,
-        'answer_id': answer_id,
-        'student_id': student_id
-       
-    }
-    print()
-    # mount grade object
-    grade = Grade(**posted_grade)
+    predicted_score = score_prediction.item()
 
-    session = Session()
-    try:
-        session.add(grade)
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        print("Error while adding grade to database:", str(e))
-        return jsonify({"error": "Failed to add grade to database"}), 500
+    # Return the predicted score as JSON response
+    return jsonify({"predicted_score": predicted_score})
 
-    # return created grade
-    grade_schema = GradeSchema()
-    response = grade_schema.dump(grade)
-    session.close()
-    return jsonify(response), 201
-
-@app.route('/grades')
-def fetchGrades():
-    # fetching from the database
-    session = Session()
-    Grade_objects = session.query(Grade).all()
-
-    # transforming into JSON-serializable objects
-    schema = GradeSchema(many=True)
-    grades = schema.dump(Grade_objects)
-
-    # serializing as JSON
-    session.close()
-    return jsonify(grades)
-#--------------------------------------------------Register-------------------------------------------------------------------
-@app.route('/register', methods=['POST'])
-def register():
-    json_data = request.json
-    user = User(
-        email=json_data['email'],
-        password=json_data['password']
-    )
-    try:
-        db.session.add(user)
-        db.session.commit()
-        status = 'success'
-    except:
-        status = 'this user is already registered'
-    db.session.close()
-
-
-
-
-
-
-#C'est tous Merci 
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)

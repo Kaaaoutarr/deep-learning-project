@@ -1,12 +1,9 @@
 from sqlalchemy.orm import relationship
-
 from sqlalchemy import Column, String, ForeignKey, Integer
 from marshmallow import Schema, fields
 from .entity import Entity, Base
 from . import answer
 from . import grade
-
-
 
 
 class Student(Entity, Base):
